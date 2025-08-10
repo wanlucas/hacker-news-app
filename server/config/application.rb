@@ -50,12 +50,13 @@ module Server
     config.api_only = true
     
     config.after_initialize do
-      if Rails.env.production?
+      # if Rails.env.production?
         Thread.new do
-          sleep(30)
-          HackerNewsService.instance.update_cache
+          sleep(1)
+          HackerNewsService.instance.update_top_stories_cache
+          HackerNewsService.instance.update_new_stories_cache
         end
       end
-    end
+    # end
   end
 end
