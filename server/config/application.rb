@@ -1,9 +1,13 @@
 require_relative "boot"
 
 require "rails"
+# Required for .megabytes method
+require "active_support/core_ext/numeric/bytes"
 # Pick the frameworks you want:
 require "active_model/railtie"
 require "active_job/railtie"
+# Require ActiveSupport core extensions for numeric methods like .megabytes
+require "active_support/core_ext/numeric/bytes"
 # require "active_record/railtie"
 # require "active_storage/engine"
 require "action_controller/railtie"
@@ -30,6 +34,8 @@ module Server
 
     config.autoload_paths += %W(#{config.root}/app/lib)
 
+    config.cache_store = :memory_store, { size: 32.megabytes }
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
@@ -42,5 +48,14 @@ module Server
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    
+    config.after_initialize do
+      if Rails.env.production?
+        Thread.new do
+          sleep(30)
+          HackerNewsService.instance.update_cache
+        end
+      end
+    end
   end
 end
