@@ -1,6 +1,6 @@
 class HackerNewsService < Api
-  MAX_TOP_STORIES = 15
-  MAX_NEW_STORIES = 100
+  MAX_TOP_STORIES = 4
+  MAX_NEW_STORIES = 1
   MIN_COMMENT_WORDS = 20
 
   def self.instance
