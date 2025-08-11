@@ -1,10 +1,19 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 15
+  MAX_TOP_STORIES = 1
   MAX_STORIES = 50
   MIN_COMMENT_WORDS = 20
 
-  def initialize(cache_repository:)
-    super('https://hacker-news.firebaseio.com/v0', cache_repository: cache_repository)
+  def initialize(
+    http_client:,
+    cache_repository:, 
+    broadcasting_service:,
+    logger:
+  )
+    super(cache_repository: cache_repository)
+
+    @http_client = http_client
+    @broadcasting_service = broadcasting_service
+    @logger = logger
   end
 
   def get_top_stories
@@ -31,9 +40,9 @@ class HackerNewsService < CachedApi
 
     new_stories = update_top_stories_cache
     
-    StoriesChannel.broadcast_new_stories(new_stories)
+    @broadcasting_service.broadcast_new_stories(new_stories)
 
-    update_stories_cache
+    # update_stories_cache
 
     return { updated?: true }
   end
@@ -43,18 +52,18 @@ class HackerNewsService < CachedApi
   def update_top_stories_cache(limit = MAX_TOP_STORIES)
     start_time = Time.current
 
-    response = get('/topstories.json')
+    response = @http_client.get('/topstories.json')
     ids = response.is_a?(Array) ? response : []
     stories = fetch_stories_by_ids(ids.take(limit))
       .sort_by { |story| -(story['time'] || 0) }
 
-    Rails.logger.debug "📋 Found #{stories.size} top stories"
+    @logger.debug "📋 Found #{stories.size} top stories"
 
 
     save_cache('top_stories', stories, 15.minutes)
 
     duration = Time.current - start_time
-    Rails.logger.info "✅ Cache updated successfully with #{stories.size} stories in #{duration.round(2)}s"
+    @logger.info "✅ Cache updated successfully with #{stories.size} stories in #{duration.round(2)}s"
 
     return stories
   end
@@ -62,38 +71,38 @@ class HackerNewsService < CachedApi
   def update_stories_cache(limit = MAX_STORIES)
     start_time = Time.current
 
-    response = get('/newstories.json')
+    response = @http_client.get('/newstories.json')
 
     ids = response.is_a?(Array) ? response : []
-    Rails.logger.debug "📊 API returned #{ids.size} story IDs"
+    @logger.debug "📊 API returned #{ids.size} story IDs"
 
     stories = fetch_stories_by_ids(ids.take(limit))
-    Rails.logger.debug "📋 Found #{stories.size} new stories"
+    @logger.debug "📋 Found #{stories.size} new stories"
 
     save_cache('stories', stories, 10.minutes)
 
     duration = Time.current - start_time
-    Rails.logger.info "✅ Cache updated successfully with #{stories.size} stories in #{duration.round(2)}s"
+    @logger.info "✅ Cache updated successfully with #{stories.size} stories in #{duration.round(2)}s"
 
     return stories
   end
 
   def fetch_max_item_id
-    get('/maxitem.json')
+    @http_client.get('/maxitem.json')
 
-  rescue Api::ApiError => error
-    Rails.logger.error "❌ Failed to fetch max item ID: #{error.message}, returning nil"
+  rescue HttpClient::ApiError => error
+    @logger.error "❌ Failed to fetch max item ID: #{error.message}, returning nil"
     nil
   end
 
   def fetch_stories_by_ids(ids)
-    Rails.logger.debug "⚡ Starting parallel fetch for #{ids.size} stories..."
+    @logger.debug "⚡ Starting parallel fetch for #{ids.size} stories..."
 
     stories = []
     mutex = Mutex.new
 
     ids.each_slice(10) do |batch|
-      Rails.logger.debug "📦 Processing batch of #{batch.size} stories..."
+      @logger.debug "📦 Processing batch of #{batch.size} stories..."
 
       threads = batch.map do |id|
         Thread.new do
@@ -113,14 +122,14 @@ class HackerNewsService < CachedApi
       threads.each(&:join)
     end
 
-    Rails.logger.debug "📚 Fetched #{stories.size} stories successfully"
+    @logger.debug "📚 Fetched #{stories.size} stories successfully"
     return stories.compact
   end
 
   def fetch_story(id)
-    get("/item/#{id}.json")
+    @http_client.get("/item/#{id}.json")
   rescue => error
-    Rails.logger.warn "⚠️ Failed to fetch story #{id}: #{error.message}"
+    @logger.warn "⚠️ Failed to fetch story #{id}: #{error.message}"
   end
 
   def fetch_comments(ids)
@@ -145,7 +154,7 @@ class HackerNewsService < CachedApi
               mutex.synchronize { comments << comment }
             end
           rescue => e
-            Rails.logger.warn "⚠️ Failed to fetch comment #{id}: #{e.message}"
+            @logger.warn "⚠️ Failed to fetch comment #{id}: #{e.message}"
             nil
           end
         end
@@ -158,7 +167,7 @@ class HackerNewsService < CachedApi
   end
 
   def fetch_comment(id)
-    comment = get("/item/#{id}.json")
+    comment = @http_client.get("/item/#{id}.json")
     comment if comment && comment['type'] == 'comment'
   end
 

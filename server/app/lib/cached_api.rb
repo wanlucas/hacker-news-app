@@ -1,6 +1,5 @@
-class CachedApi < Api
-  def initialize(base_url, cache_repository:)
-    super(base_url)
+class CachedApi
+  def initialize(cache_repository:)
     @cache_repository = cache_repository
   end
 
