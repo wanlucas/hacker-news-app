@@ -1,6 +1,6 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 3
-  MAX_STORIES = 1
+  MAX_TOP_STORIES = 15
+  MAX_STORIES = 50
   MIN_COMMENT_WORDS = 20
 
   def initialize(cache_repository:)
@@ -46,18 +46,17 @@ class HackerNewsService < CachedApi
     response = get('/topstories.json')
     ids = response.is_a?(Array) ? response : []
     stories = fetch_stories_by_ids(ids.take(limit))
+      .sort_by { |story| -(story['time'] || 0) }
 
     Rails.logger.debug "📋 Found #{stories.size} top stories"
 
-    valid_stories = filter_valid_stories(stories)
-      .sort_by { |story| -(story['time'] || 0) }
 
-    save_cache('top_stories', valid_stories, 10.minutes)
+    save_cache('top_stories', stories, 15.minutes)
 
     duration = Time.current - start_time
-    Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
+    Rails.logger.info "✅ Cache updated successfully with #{stories.size} stories in #{duration.round(2)}s"
 
-    return valid_stories
+    return stories
   end
 
   def update_stories_cache(limit = MAX_STORIES)
@@ -71,14 +70,12 @@ class HackerNewsService < CachedApi
     stories = fetch_stories_by_ids(ids.take(limit))
     Rails.logger.debug "📋 Found #{stories.size} new stories"
 
-    valid_stories = filter_valid_stories(stories)
-
-    save_cache('stories', valid_stories, 5.minutes)
+    save_cache('stories', stories, 10.minutes)
 
     duration = Time.current - start_time
-    Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
+    Rails.logger.info "✅ Cache updated successfully with #{stories.size} stories in #{duration.round(2)}s"
 
-    return valid_stories
+    return stories
   end
 
   def fetch_max_item_id
@@ -100,32 +97,30 @@ class HackerNewsService < CachedApi
 
       threads = batch.map do |id|
         Thread.new do
-          begin
             story = fetch_story(id)
 
             if story
               comments = fetch_comments(story['kids'] || [])
+
               story['comments'] = comments
               story.delete('kids')
 
               mutex.synchronize { stories << story }
             end
-          rescue => error
-            Rails.logger.warn "⚠️ Failed to fetch story #{id}: #{error.message}"
-          end
         end
       end
 
-      threads.each { |thread| thread.join(15) }
+      threads.each(&:join)
     end
 
     Rails.logger.debug "📚 Fetched #{stories.size} stories successfully"
-    return stories
+    return stories.compact
   end
 
   def fetch_story(id)
-    story = get("/item/#{id}.json")
-    story if story && story['type'] == 'story'
+    get("/item/#{id}.json")
+  rescue => error
+    Rails.logger.warn "⚠️ Failed to fetch story #{id}: #{error.message}"
   end
 
   def fetch_comments(ids)
@@ -143,8 +138,7 @@ class HackerNewsService < CachedApi
             if comment
               if comment['kids'] && !comment['kids'].empty?
                 child_comments = fetch_comments(comment['kids'])
-                valid_child_comments = filter_valid_comments(child_comments)
-                comment['comments'] = valid_child_comments
+                comment['comments'] = child_comments
                 comment.delete('kids')
               end
 
@@ -157,10 +151,8 @@ class HackerNewsService < CachedApi
         end
       end
 
-      threads.each { |thread| thread.join(15) }
+      threads.each { |thread| thread.join(10) }
     end
-
-    Rails.logger.debug "📚 Fetched #{comments.size} comments successfully"
 
     filter_valid_comments(comments)
   end
@@ -168,14 +160,6 @@ class HackerNewsService < CachedApi
   def fetch_comment(id)
     comment = get("/item/#{id}.json")
     comment if comment && comment['type'] == 'comment'
-  end
-
-  def filter_valid_stories(stories)
-    valid = stories.compact.select do |story|
-      !story['deleted']
-    end
-
-    return valid
   end
 
   def filter_valid_comments(comments)

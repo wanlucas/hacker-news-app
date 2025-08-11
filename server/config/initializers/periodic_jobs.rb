@@ -3,6 +3,8 @@ Rails.application.configure do
     Thread.new do
       Thread.current.name = "PeriodicStoriesWorker"
       
+      sleep 10.seconds
+
       Rails.logger.info "🚀 Worker periódico iniciado - Stories a cada 3 minutos"
       
       loop do
@@ -14,7 +16,7 @@ Rails.application.configure do
           Rails.logger.error "❌ Erro no worker periódico: #{error.message}"
         end
 
-        sleep 3.minutes
+        sleep 5.minutes
       end
     end
   end
