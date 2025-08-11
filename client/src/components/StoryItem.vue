@@ -34,7 +34,7 @@
     </div>
 
     <div v-if="showComments" class="comments-section">
-      <CommentsList :story-id="story.id" />
+      <CommentsList :comments="story.comments || []" :story-id="story.id" />
     </div>
   </div>
 </template>
@@ -165,7 +165,6 @@ export default {
   border-top: 1px solid #eee;
 }
 
-/* Responsividade para mobile */
 @media (max-width: 768px) {
   .story-meta {
     flex-direction: column;
