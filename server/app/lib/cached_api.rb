@@ -1,10 +1,11 @@
 class CachedApi < Api
-  def initialize(base_url)
+  def initialize(base_url, cache_repository:)
     super(base_url)
+    @cache_repository = cache_repository
   end
 
   def load_cache(key, revalidate_fn:)
-    data = Rails.cache.read(key)
+    data = @cache_repository.read(key)
 
     if (cache_is_valid?(key))
       return data
@@ -13,8 +14,8 @@ class CachedApi < Api
     if data.nil?
       Rails.logger.info "🌐 Cache miss - fetching fresh data for key '#{key}'..."
       data = revalidate_fn.call
-    elsif !Rails.cache.exist?("#{key}_lock")
-      Rails.cache.write("#{key}_lock", true, expires_in: 3.minutes)
+    elsif !@cache_repository.exist?("#{key}_lock")
+      @cache_repository.write("#{key}_lock", true, expires_in: 3.minutes)
 
       Thread.new do
         begin
@@ -24,7 +25,7 @@ class CachedApi < Api
         rescue => error
           Rails.logger.error "❌ Background refresh failed for '#{key}': #{error.class} #{error.message}"
         ensure
-          Rails.cache.delete("#{key}_lock")
+          @cache_repository.delete("#{key}_lock")
         end
       end
     end
@@ -35,13 +36,13 @@ class CachedApi < Api
   def save_cache(key, stories, expiration)
     Rails.logger.debug "💾 Saving #{stories.size} items to cache..."
 
-    Rails.cache.write(key, stories)
-    Rails.cache.write("#{key}_is_updated", true, expires_in: expiration)
+    @cache_repository.write(key, stories)
+    @cache_repository.write("#{key}_is_updated", true, expires_in: expiration)
 
     Rails.logger.debug "✅ Cache saved successfully for key '#{key}'"
   end
 
   def cache_is_valid?(key)
-    Rails.cache.exist?(key) && Rails.cache.exist?("#{key}_is_updated")
+    @cache_repository.exist?(key) && @cache_repository.exist?("#{key}_is_updated")
   end
 end

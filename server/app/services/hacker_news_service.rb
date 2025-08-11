@@ -1,10 +1,10 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 5
+  MAX_TOP_STORIES = 1
   MAX_STORIES = 1
   MIN_COMMENT_WORDS = 20
 
-  def self.instance
-    @instance ||= new("https://hacker-news.firebaseio.com/v0")
+  def initialize(cache_repository:)
+    super('https://hacker-news.firebaseio.com/v0', cache_repository: cache_repository)
   end
 
   def get_top_stories
@@ -21,12 +21,12 @@ class HackerNewsService < CachedApi
 
   def update_cache
     max_item_id = fetch_max_item_id
-    act_item_id = Rails.cache.read('max_item_id')
+    act_item_id = @cache_repository.read('max_item_id')
 
     info = {
       max_item_id: max_item_id,
-      top_stories: Rails.cache.read('top_stories')&.size || 0,
-      stories: Rails.cache.read('stories')&.size || 0
+      top_stories: @cache_repository.read('top_stories')&.size || 0,
+      stories: @cache_repository.read('stories')&.size || 0
     }
 
     if !act_item_id.nil? && max_item_id == act_item_id
@@ -35,7 +35,7 @@ class HackerNewsService < CachedApi
       return info
     end
 
-    Rails.cache.write('max_item_id', max_item_id)
+    @cache_repository.write('max_item_id', max_item_id)
 
     if !cache_is_valid?('top_stories')
       Rails.logger.info "🌐 Updating top stories cache..."
@@ -47,8 +47,8 @@ class HackerNewsService < CachedApi
       update_stories_cache
     end
 
-    info[:top_stories] = Rails.cache.read('top_stories')&.size || 0
-    info[:stories] = Rails.cache.read('stories')&.size || 0
+    info[:top_stories] = @cache_repository.read('top_stories')&.size || 0
+    info[:stories] = @cache_repository.read('stories')&.size || 0
 
     return info
   end

@@ -1,6 +1,6 @@
 class Api::StoriesController < ApplicationController
   def index    
-    stories = HackerNewsService.instance.get_top_stories
+    stories = ServiceFactory.hacker_news_service.get_top_stories
 
     render json: {
       success: true,
@@ -21,7 +21,7 @@ class Api::StoriesController < ApplicationController
       return
     end
 
-    stories = HackerNewsService.instance.search_stories(query, limit)
+    stories = ServiceFactory.hacker_news_service.search_stories(query, limit)
 
     render json: {
       success: true,
@@ -31,7 +31,7 @@ class Api::StoriesController < ApplicationController
   end
 
   def update
-    info = HackerNewsService.instance.update_cache
+    info = ServiceFactory.hacker_news_service.update_cache
     render json: { success: true, data: info }
   end
 end
