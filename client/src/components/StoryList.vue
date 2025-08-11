@@ -1,5 +1,16 @@
 <template>
   <div class="story-list">
+    <div class="header-section">
+      <h2>
+        📰 {{ isSearching ? 'Resultados da busca' : 'Top Stories' }} ({{ stories.length }})
+        <span 
+          class="websocket-indicator" 
+          :class="{ connected: isConnected }"
+          :title="getWebSocketTooltip()"
+        ></span>
+      </h2>
+    </div>
+
     <form class="search-bar" @submit.prevent="handleSearch">
       <input
         v-model="searchQuery"
@@ -37,14 +48,6 @@
     </div>
 
     <div v-else class="stories">
-      <h2>
-        📰 {{ isSearching ? 'Resultados da busca' : 'Top Stories' }} ({{ stories.length }})
-        <span 
-          class="websocket-indicator" 
-          :class="{ connected: isConnected }"
-          :title="getWebSocketTooltip()"
-        ></span>
-      </h2>
       <div v-if="isSearching" class="back-to-top-wrapper">
         <button class="back-top-btn" @click="clearSearch" :disabled="loading">
           <i class="fas fa-arrow-left"></i>
@@ -159,6 +162,18 @@ export default {
   width: 100%;
 }
 
+.header-section {
+  margin-bottom: 15px;
+}
+
+.header-section h2 {
+  color: #333;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
 .websocket-indicator {
   display: inline-block;
   width: 10px;
@@ -204,58 +219,73 @@ export default {
 
 .search-bar {
   display: flex;
-  margin: 20px 0;
+  gap: 8px;
+  margin: 15px 0;
 }
 
 .search-input {
   flex: 1;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px 0 0 6px;
-  font-size: 1rem;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  background: #fafafa;
 }
 
 .search-input:focus {
   border-color: #ff6600;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.1);
 }
 
 .search-btn {
-  background-color: #ff6600;
-  color: white;
+  background: #ff6600;
+  color: #ffffff;
   border: none;
-  padding: 12px 16px;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  min-width: 70px;
+  justify-content: center;
 }
 
 .search-btn:hover {
-  background-color: #e55a00;
+  background: #e55a00;
+  transform: translateY(-1px);
 }
 
 .search-btn:disabled {
-  background-color: #ccc;
+  background: #ccc;
   cursor: not-allowed;
+  transform: none;
 }
 
 .clear-btn {
-  background-color: #dc3545;
-  color: white;
+  background: #888;
+  color: #ffffff;
   border: none;
-  padding: 10px 12px;
-  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .clear-btn:hover {
-  background-color: #c82333;
+  background: #666;
+  transform: scale(1.1);
 }
 
 .loading,
@@ -299,14 +329,6 @@ export default {
 
 .retry-btn:hover {
   background-color: #e55a00;
-}
-
-.stories h2 {
-  color: #333;
-  margin-bottom: 20px;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
 }
 
 .back-to-top-wrapper {

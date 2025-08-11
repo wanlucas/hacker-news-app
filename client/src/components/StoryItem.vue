@@ -24,6 +24,7 @@
       </span>
 
       <span 
+        v-if="commentCount > 0"
         class="meta-item comments" 
         @click="toggleComments"
         :class="{ active: showComments }"
