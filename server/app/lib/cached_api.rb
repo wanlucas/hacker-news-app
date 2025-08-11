@@ -1,25 +1,6 @@
-require 'net/http'
-require 'json'
-
-class Api
-  class ApiError < StandardError; end
-
-  attr_reader :base_url
-
+class CachedApi < Api
   def initialize(base_url)
-    @base_url = base_url
-  end
-
-  def get(endpoint)
-    uri = URI("#{base_url}#{endpoint}")
-    response = Net::HTTP.get_response(uri)
-    
-    if response.is_a?(Net::HTTPSuccess)
-      JSON.parse(response.body)
-    else
-      Rails.logger.error "Request error: #{response.code} - #{response.message}"
-      raise ApiError, "API request failed with status #{response.code} - #{response.message}"
-    end
+    super(base_url)
   end
 
   def load_cache(key, revalidate_fn:)
@@ -52,7 +33,7 @@ class Api
   end
 
   def save_cache(key, stories, expiration)
-    Rails.logger.debug "💾 Saving #{stories.size} stories to cache..."
+    Rails.logger.debug "💾 Saving #{stories.size} items to cache..."
 
     Rails.cache.write(key, stories)
     Rails.cache.write("#{key}_is_updated", true, expires_in: expiration)

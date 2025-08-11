@@ -1,6 +1,6 @@
-class HackerNewsService < Api
-  MAX_TOP_STORIES = 4
-  MAX_NEW_STORIES = 1
+class HackerNewsService < CachedApi
+  MAX_TOP_STORIES = 1
+  MAX_STORIES = 1
   MIN_COMMENT_WORDS = 20
 
   def self.instance
@@ -8,36 +8,44 @@ class HackerNewsService < Api
   end
 
   def get_top_stories
-    cached_stories = Rails.cache.read('top_stories')
-
-    if cached_stories
-      Rails.logger.debug "📖 Returning #{cached_stories.size} stories from cache"
-      return cached_stories
-    end
-
-    Rails.logger.info "🌐 Cache miss - fetching fresh stories from API..."
-    update_top_stories_cache
+    return load_cache('top_stories', revalidate_fn: method(:update_top_stories_cache))
   end
 
   def search_stories(query, limit = 10)
-    cached_stories = Rails.cache.read('new_stories')
+    stories = load_cache('stories', revalidate_fn: method(:update_stories_cache))
 
-    if !cached_stories
-      Rails.logger.info "🌐 Cache miss - fetching fresh stories from API..."
-      cached_stories = update_new_stories_cache
-    end
-
-    Rails.logger.debug "📖 Returning #{cached_stories.size} stories from cache"
-
-    cached_stories
+    stories
       .select { |story| story['title'].downcase.include?(query.downcase) }
       .take(limit)
   end
 
+  def update_cache
+    max_item_id = fetch_max_item_id
+    act_item_id = Rails.cache.read('max_item_id')
+
+    if !act_item_id.nil? && max_item_id == act_item_id
+      Rails.logger.debug "🔄 Cache is up-to-date with max item ID #{max_item_id}"
+      return
+    end
+
+    Rails.cache.write('max_item_id', max_item_id)
+
+    if !cache_is_valid?('top_stories')
+      Rails.logger.info "🌐 Updating top stories cache..."
+      update_top_stories_cache
+    end
+
+    if !cache_is_valid?('stories')
+      Rails.logger.info "🌐 Updating new stories cache..."
+      update_stories_cache
+    end
+  end
+
+  private
+
   def update_top_stories_cache(limit = MAX_TOP_STORIES)
     start_time = Time.current
 
-   
     response = get('/topstories.json')
     ids = response.is_a?(Array) ? response : []
     stories = fetch_stories_by_ids(ids.take(limit))
@@ -45,7 +53,7 @@ class HackerNewsService < Api
     Rails.logger.debug "📋 Found #{stories.size} top stories"
 
     valid_stories = filter_valid_stories(stories)
-    save_cache('top_stories', valid_stories)
+    save_cache('top_stories', valid_stories, 1.hour)
 
     duration = Time.current - start_time
     Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
@@ -53,19 +61,20 @@ class HackerNewsService < Api
     valid_stories
   end
 
-  def update_new_stories_cache(limit = MAX_NEW_STORIES)
+  def update_stories_cache(limit = MAX_STORIES)
     start_time = Time.current
 
     response = get('/newstories.json')
 
     ids = response.is_a?(Array) ? response : []
     Rails.logger.debug "📊 API returned #{ids.size} story IDs"
-    stories = fetch_stories_by_ids(ids.take(limit))
 
+    stories = fetch_stories_by_ids(ids.take(limit))
     Rails.logger.debug "📋 Found #{stories.size} new stories"
+
     valid_stories = filter_valid_stories(stories)
 
-    save_cache('new_stories', valid_stories)
+    save_cache('stories', valid_stories, 20.seconds)
 
     duration = Time.current - start_time
     Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
@@ -73,27 +82,11 @@ class HackerNewsService < Api
     valid_stories
   end
 
-  def cache_needs_update?
-    max_item_id = fetch_max_item_id
-
-    if Rails.cache.read('max_item_id') == max_item_id
-      Rails.logger.debug "🔄 Cache is up-to-date with max item ID #{max_item_id}"
-      return false
-    end
-
-    last_update = Rails.cache.read('cache_last_update')
-    story_count = Rails.cache.read('top_stories')&.size || 0
-
-    story_count == 0 || (last_update && last_update < 10.minutes.ago)
-  end
-
-  private
-
   def fetch_max_item_id
     get('/maxitem.json')
   rescue Api::ApiError => error
-    Rails.logger.error "❌ Failed to fetch max item ID: #{error.message}, returning infinity"
-    Float::INFINITY
+    Rails.logger.error "❌ Failed to fetch max item ID: #{error.message}, returning nil"
+    nil
   end
 
   def fetch_stories_by_ids(ids)
@@ -108,7 +101,7 @@ class HackerNewsService < Api
       threads = batch.map do |id|
         Thread.new do
           begin
-            story = get_story(id)
+            story = fetch_story(id)
 
             if story
               comments = fetch_comments(story['kids'] || [])
@@ -117,8 +110,8 @@ class HackerNewsService < Api
 
               mutex.synchronize { stories << story }
             end
-          rescue => e
-            Rails.logger.warn "⚠️ Failed to fetch story #{id}: #{e.message}"
+          rescue => error
+            Rails.logger.warn "⚠️ Failed to fetch story #{id}: #{error.message}"
           end
         end
       end
@@ -127,10 +120,10 @@ class HackerNewsService < Api
     end
 
     Rails.logger.debug "📚 Fetched #{stories.size} stories successfully"
-    stories
+    return stories
   end
 
-  def get_story(id)
+  def fetch_story(id)
     story = get("/item/#{id}.json")
     story if story && story['type'] == 'story'
   end
@@ -187,7 +180,7 @@ class HackerNewsService < Api
     end
 
     Rails.logger.debug "✅ Filtered to #{valid.size} valid stories"
-    valid
+    return valid
   end
 
   def filter_valid_comments(comments)
@@ -196,7 +189,7 @@ class HackerNewsService < Api
     end
 
     Rails.logger.debug "✅ Filtered to #{valid.size} valid comments"
-    valid
+    return valid
   end
 
   def comment_has_enough_words?(comment)
@@ -208,18 +201,7 @@ class HackerNewsService < Api
       .reject(&:empty?)
       .size
 
-    word_count >= MIN_COMMENT_WORDS
-  end
-
-  def save_cache(key, stories)
-    Rails.logger.debug "💾 Saving #{stories.size} stories to cache..."
-
-    max_item_id = fetch_max_item_id
-
-    Rails.cache.write('max_item_id', max_item_id) if max_item_id != Float::INFINITY
-    Rails.cache.write(key, stories)
-
-    Rails.logger.debug "✅ Cache saved successfully for key '#{key}'"
+    return word_count >= MIN_COMMENT_WORDS
   end
 end
 
