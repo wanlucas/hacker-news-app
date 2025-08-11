@@ -1,5 +1,5 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 1
+  MAX_TOP_STORIES = 5
   MAX_STORIES = 1
   MIN_COMMENT_WORDS = 20
 
@@ -23,9 +23,16 @@ class HackerNewsService < CachedApi
     max_item_id = fetch_max_item_id
     act_item_id = Rails.cache.read('max_item_id')
 
+    info = {
+      max_item_id: max_item_id,
+      top_stories: Rails.cache.read('top_stories')&.size || 0,
+      stories: Rails.cache.read('stories')&.size || 0
+    }
+
     if !act_item_id.nil? && max_item_id == act_item_id
       Rails.logger.debug "🔄 Cache is up-to-date with max item ID #{max_item_id}"
-      return
+
+      return info
     end
 
     Rails.cache.write('max_item_id', max_item_id)
@@ -39,6 +46,11 @@ class HackerNewsService < CachedApi
       Rails.logger.info "🌐 Updating new stories cache..."
       update_stories_cache
     end
+
+    info[:top_stories] = Rails.cache.read('top_stories')&.size || 0
+    info[:stories] = Rails.cache.read('stories')&.size || 0
+
+    return info
   end
 
   private
@@ -53,7 +65,7 @@ class HackerNewsService < CachedApi
     Rails.logger.debug "📋 Found #{stories.size} top stories"
 
     valid_stories = filter_valid_stories(stories)
-    save_cache('top_stories', valid_stories, 1.hour)
+    save_cache('top_stories', valid_stories, 5.minutes)
 
     duration = Time.current - start_time
     Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
@@ -74,7 +86,7 @@ class HackerNewsService < CachedApi
 
     valid_stories = filter_valid_stories(stories)
 
-    save_cache('stories', valid_stories, 20.seconds)
+    save_cache('stories', valid_stories, 1.minute)
 
     duration = Time.current - start_time
     Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
@@ -95,7 +107,7 @@ class HackerNewsService < CachedApi
     stories = []
     mutex = Mutex.new
 
-    ids.each_slice(5) do |batch|
+    ids.each_slice(10) do |batch|
       Rails.logger.debug "📦 Processing batch of #{batch.size} stories..."
 
       threads = batch.map do |id|
@@ -129,16 +141,12 @@ class HackerNewsService < CachedApi
   end
 
   def fetch_comments(ids)
-    Rails.logger.debug "🔍 Fetching comments for #{ids.size} IDs..."
-
     return [] if ids.nil? || ids.empty?
 
     comments = []
     mutex = Mutex.new
 
-    ids.each_slice(20) do |batch|
-      Rails.logger.debug "📦 Fetching comments for batch of #{batch.size} IDs..."
-
+    ids.each_slice(30) do |batch|
       threads = batch.map do |id|
         Thread.new do
           begin
@@ -179,7 +187,6 @@ class HackerNewsService < CachedApi
       !story['deleted']
     end
 
-    Rails.logger.debug "✅ Filtered to #{valid.size} valid stories"
     return valid
   end
 
@@ -188,7 +195,6 @@ class HackerNewsService < CachedApi
       !comment['deleted'] && comment_has_enough_words?(comment)
     end
 
-    Rails.logger.debug "✅ Filtered to #{valid.size} valid comments"
     return valid
   end
 

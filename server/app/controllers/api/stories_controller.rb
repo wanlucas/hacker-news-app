@@ -29,4 +29,9 @@ class Api::StoriesController < ApplicationController
       count: stories.length,
     }
   end
+
+  def update
+    info = HackerNewsService.instance.update_cache
+    render json: { success: true, data: info }
+  end
 end
