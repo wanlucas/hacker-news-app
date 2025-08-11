@@ -37,43 +37,40 @@ class HackerNewsService < Api
   def update_top_stories_cache(limit = MAX_TOP_STORIES)
     start_time = Time.current
 
-    begin
-      response = get('/topstories.json')
-      ids = response.is_a?(Array) ? response : []
-      stories = fetch_stories_by_ids(ids.take(limit))
+   
+    response = get('/topstories.json')
+    ids = response.is_a?(Array) ? response : []
+    stories = fetch_stories_by_ids(ids.take(limit))
 
-      Rails.logger.debug "📋 Found #{stories.size} top stories"
+    Rails.logger.debug "📋 Found #{stories.size} top stories"
 
-      valid_stories = filter_valid_stories(stories)
-      save_cache('top_stories', valid_stories)
+    valid_stories = filter_valid_stories(stories)
+    save_cache('top_stories', valid_stories)
 
-      duration = Time.current - start_time
-      Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
+    duration = Time.current - start_time
+    Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
 
-      valid_stories
-    end
+    valid_stories
   end
 
   def update_new_stories_cache(limit = MAX_NEW_STORIES)
     start_time = Time.current
 
-    begin
-      response = get('/newstories.json')
-      ids = response.is_a?(Array) ? response : []
+    response = get('/newstories.json')
 
-      Rails.logger.debug "📊 API returned #{ids.size} story IDs"
+    ids = response.is_a?(Array) ? response : []
+    Rails.logger.debug "📊 API returned #{ids.size} story IDs"
+    stories = fetch_stories_by_ids(ids.take(limit))
 
-      stories = fetch_stories_by_ids(ids.take(limit))
-      Rails.logger.debug "📋 Found #{stories.size} new stories"
+    Rails.logger.debug "📋 Found #{stories.size} new stories"
+    valid_stories = filter_valid_stories(stories)
 
-      valid_stories = filter_valid_stories(stories)
-      save_cache('new_stories', valid_stories)
+    save_cache('new_stories', valid_stories)
 
-      duration = Time.current - start_time
-      Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
+    duration = Time.current - start_time
+    Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
 
-      valid_stories
-    end
+    valid_stories
   end
 
   def cache_needs_update?
@@ -138,7 +135,6 @@ class HackerNewsService < Api
     story if story && story['type'] == 'story'
   end
 
-  # Fetch multiple comments by IDs in parallel
   def fetch_comments(ids)
     Rails.logger.debug "🔍 Fetching comments for #{ids.size} IDs..."
 
@@ -177,7 +173,6 @@ class HackerNewsService < Api
 
     Rails.logger.debug "📚 Fetched #{comments.size} comments successfully"
 
-    # Filter comments to only include those with 20+ words
     filter_valid_comments(comments)
   end
 
