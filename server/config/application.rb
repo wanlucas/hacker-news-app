@@ -37,7 +37,7 @@ module Server
     config.after_initialize do
       if Rails.env.production?
         Thread.new do
-          sleep(1)
+          sleep(10)
           hacker_news_service = ServiceFactory.build_hacker_news_service
           hacker_news_service.update_cache
         end

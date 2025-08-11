@@ -1,5 +1,5 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 1
+  MAX_TOP_STORIES = 2
   MAX_STORIES = 1
   MIN_COMMENT_WORDS = 20
 
@@ -30,20 +30,20 @@ class HackerNewsService < CachedApi
     }
 
     if !act_item_id.nil? && max_item_id == act_item_id
-      Rails.logger.debug "🔄 Cache is up-to-date with max item ID #{max_item_id}"
-
       return info
     end
 
     @cache_repository.write('max_item_id', max_item_id)
 
     if !cache_is_valid?('top_stories')
-      Rails.logger.info "🌐 Updating top stories cache..."
-      update_top_stories_cache
+      new_stories = update_top_stories_cache
+      
+      StoriesChannel.broadcast_new_stories(new_stories)
+      
+      Rails.logger.info "🚀 WebSocket: Novas top stories enviadas para clientes conectados (#{new_stories.size} stories)"
     end
 
     if !cache_is_valid?('stories')
-      Rails.logger.info "🌐 Updating new stories cache..."
       update_stories_cache
     end
 
@@ -96,6 +96,7 @@ class HackerNewsService < CachedApi
 
   def fetch_max_item_id
     get('/maxitem.json')
+
   rescue Api::ApiError => error
     Rails.logger.error "❌ Failed to fetch max item ID: #{error.message}, returning nil"
     nil

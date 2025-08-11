@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount ActionCable.server => '/cable'
+  
   namespace :api do
     get 'stories/update', to: 'stories#update'
 
