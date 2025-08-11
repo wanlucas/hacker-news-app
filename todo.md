@@ -1,3 +1,4 @@
 - ordenar items por data
 - verificar erro de 1 item a menos no cache
 - verificar colisao de cache com duas requests simutaneas com cache vencido
+- preparar conifguracao cors para deploy
