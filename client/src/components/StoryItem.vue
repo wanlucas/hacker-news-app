@@ -29,7 +29,7 @@
         :class="{ active: showComments }"
       >
         <i class="fas fa-comment"></i>
-        {{ story.descendants || 0 }} comentários
+        {{ commentCount }} comentários
       </span>
     </div>
 
@@ -58,6 +58,18 @@ export default {
   data() {
     return {
       showComments: false
+    }
+  },
+
+  computed: {
+    commentCount() {
+      const countRecursive = (comments) => {
+        if (!comments || !Array.isArray(comments)) return 0
+        return comments.reduce((acc, comment) => {
+          return acc + 1 + countRecursive(comment.comments)
+        }, 0)
+      }
+      return countRecursive(this.story.comments)
     }
   },
 

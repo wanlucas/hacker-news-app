@@ -1,5 +1,11 @@
 <template>
-  <div class="comment-node" :style="{ marginLeft: depth > 0 ? depth * 14 + 'px' : '0' }">
+  <div 
+    class="comment-node" 
+    :style="{ 
+      marginLeft: depth > 0 ? depth * 14 + 'px' : '0',
+      '--depth': depth 
+    }"
+  >
     <div class="comment-header">
       <span class="author"><i class="fas fa-user"></i> {{ comment.by || 'anônimo' }}</span>
       <span class="time"><i class="fas fa-clock"></i> {{ formatTime(comment.time) }}</span>
@@ -114,7 +120,6 @@ export default {
   gap: 8px;
 }
 
-/* ===== Transitions ===== */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity .15s ease;
@@ -123,5 +128,34 @@ export default {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .comment-node {
+    padding: 8px 10px;
+    margin-left: 0 !important;
+  }
+  
+  .comment-node[style*="margin-left"] {
+    margin-left: calc(var(--depth, 0) * 8px) !important;
+  }
+  
+  .comment-header {
+    gap: 8px;
+    font-size: 0.7rem;
+  }
+  
+  .comment-body {
+    font-size: 0.8rem;
+  }
+  
+  .children {
+    gap: 6px;
+    margin-top: 6px;
+  }
+  
+  .comment-node + .comment-node {
+    margin-top: 6px;
+  }
 }
 </style>
