@@ -1,0 +1,2 @@
+- ordenar items por data
+- verificar erro de 1 item a menos no cache
