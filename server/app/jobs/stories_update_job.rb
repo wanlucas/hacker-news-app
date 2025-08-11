@@ -5,7 +5,7 @@ class StoriesUpdateJob < ApplicationJob
     Rails.logger.info "Starting periodic stories update"
     
     begin
-      ServiceFactory.build_hacker_news_service.update_cache
+      ServiceFactory.hacker_news_service.update_cache
 
       Rails.logger.info "Stories updated successfully"
       

@@ -1,5 +1,5 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 2
+  MAX_TOP_STORIES = 3
   MAX_STORIES = 1
   MIN_COMMENT_WORDS = 20
 
@@ -23,34 +23,19 @@ class HackerNewsService < CachedApi
     max_item_id = fetch_max_item_id
     act_item_id = @cache_repository.read('max_item_id')
 
-    info = {
-      max_item_id: max_item_id,
-      top_stories: @cache_repository.read('top_stories')&.size || 0,
-      stories: @cache_repository.read('stories')&.size || 0
-    }
-
     if !act_item_id.nil? && max_item_id == act_item_id
-      return info
+      return { updated?: false }
     end
 
     @cache_repository.write('max_item_id', max_item_id)
 
-    if !cache_is_valid?('top_stories')
-      new_stories = update_top_stories_cache
-      
-      StoriesChannel.broadcast_new_stories(new_stories)
-      
-      Rails.logger.info "🚀 WebSocket: Novas top stories enviadas para clientes conectados (#{new_stories.size} stories)"
-    end
+    new_stories = update_top_stories_cache
+    
+    StoriesChannel.broadcast_new_stories(new_stories)
 
-    if !cache_is_valid?('stories')
-      update_stories_cache
-    end
+    update_stories_cache
 
-    info[:top_stories] = @cache_repository.read('top_stories')&.size || 0
-    info[:stories] = @cache_repository.read('stories')&.size || 0
-
-    return info
+    return { updated?: true }
   end
 
   private
@@ -65,12 +50,14 @@ class HackerNewsService < CachedApi
     Rails.logger.debug "📋 Found #{stories.size} top stories"
 
     valid_stories = filter_valid_stories(stories)
-    save_cache('top_stories', valid_stories, 5.minutes)
+      .sort_by { |story| -(story['time'] || 0) }
+
+    save_cache('top_stories', valid_stories, 10.minutes)
 
     duration = Time.current - start_time
     Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
 
-    valid_stories
+    return valid_stories
   end
 
   def update_stories_cache(limit = MAX_STORIES)
@@ -86,12 +73,12 @@ class HackerNewsService < CachedApi
 
     valid_stories = filter_valid_stories(stories)
 
-    save_cache('stories', valid_stories, 1.minute)
+    save_cache('stories', valid_stories, 5.minutes)
 
     duration = Time.current - start_time
     Rails.logger.info "✅ Cache updated successfully with #{valid_stories.size} stories in #{duration.round(2)}s"
 
-    valid_stories
+    return valid_stories
   end
 
   def fetch_max_item_id

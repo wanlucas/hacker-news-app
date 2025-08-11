@@ -33,15 +33,5 @@ module Server
     config.cache_store = :memory_store, { size: 32.megabytes }
 
     config.api_only = true
-    
-    config.after_initialize do
-      if Rails.env.production?
-        Thread.new do
-          sleep(10)
-          hacker_news_service = ServiceFactory.build_hacker_news_service
-          hacker_news_service.update_cache
-        end
-      end
-    end
   end
 end
