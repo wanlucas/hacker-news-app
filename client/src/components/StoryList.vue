@@ -62,9 +62,9 @@
 </template>
 
 <script>
-import axios from 'axios'
 import StoryItem from './StoryItem.vue'
 import { useStoriesWebSocket } from '../composables/useStoriesWebSocket.js'
+import storiesService from '../services/stories.js'
 
 export default {
   name: 'StoryList',
@@ -95,17 +95,18 @@ export default {
       try {
         this.loading = true
         this.error = null
-        const response = await axios.get('http://localhost:3000/api/stories')
-        if (response.data.success) {
-          this.stories = response.data.data
-          this.topStories = response.data.data
+        const data = await storiesService.getStories()
+        
+        if (data.success) {
+          this.stories = data.data
+          this.topStories = data.data
           this.isSearching = false
         } else {
           throw new Error('Falha ao carregar stories')
         }
       } catch (error) {
         console.error('Erro ao buscar stories:', error)
-        this.error = 'Não foi possível carregar as stories.'
+        this.error = error.message || 'Não foi possível carregar as stories.'
       } finally { 
         this.loading = false 
       }
@@ -121,18 +122,17 @@ export default {
       try {
         this.loading = true
         this.error = null
-        const response = await axios.get('http://localhost:3000/api/stories/search', { 
-          params: { q, limit: 20 } 
-        })
-        if (response.data.success) {
-          this.stories = response.data.data
+        const data = await storiesService.searchStories(q, 20)
+        
+        if (data.success) {
+          this.stories = data.data
           this.isSearching = true
         } else { 
           throw new Error('Busca falhou') 
         }
-      } catch (e) {
-        console.error(e)
-        this.error = 'Erro ao buscar.'
+      } catch (error) {
+        console.error('Erro na busca:', error)
+        this.error = error.message || 'Erro ao buscar.'
       } finally { 
         this.loading = false 
       }

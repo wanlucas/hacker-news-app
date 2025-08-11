@@ -1,6 +1,7 @@
+import { apiURL } from '@/lib/api'
 import { ref, onMounted, onUnmounted } from 'vue'
 
-export function useStoriesWebSocket(serverUrl = 'ws://localhost:3000/cable') {
+export function useStoriesWebSocket(serverUrl = `${apiURL("ws")}/cable`) {
   const isConnected = ref(false)
   const newStories = ref(null)
 
@@ -23,7 +24,7 @@ export function useStoriesWebSocket(serverUrl = 'ws://localhost:3000/cable') {
 
           disconnected() {
             console.log('❌ WebSocket desconectado do StoriesChannel')
-            isConnected.value = false  // Atualiza estado reativo
+            isConnected.value = false
           },
 
           received(data) {
@@ -42,7 +43,7 @@ export function useStoriesWebSocket(serverUrl = 'ws://localhost:3000/cable') {
   const disconnect = () => {
     if (cable) {
       console.log('🔌 Desconectando WebSocket...')
-      cable.disconnect()       // Fecha conexão
+      cable.disconnect()
       isConnected.value = false
     }
   }

@@ -2,3 +2,5 @@
 - verificar erro de 1 item a menos no cache
 - verificar colisao de cache com duas requests simutaneas com cache vencido
 - preparar conifguracao cors para deploy
+- criar arquivo api no front pra chamar back, utilizar envs para config
+- encontrar local em comum para lock
