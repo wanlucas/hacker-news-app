@@ -92,7 +92,7 @@ export default {
 .toggle-btn {
   background: none;
   border: none;
-  color: #ff6600;
+  color: #2c3e50;
   font-size: 0.7rem;
   cursor: pointer;
   padding: 2px 6px;
@@ -100,7 +100,7 @@ export default {
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 102, 0, 0.1);
+  background: rgba(44, 62, 80, 0.1);
 }
 
 .comment-body {

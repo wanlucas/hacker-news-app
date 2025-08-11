@@ -235,13 +235,13 @@ export default {
 }
 
 .search-input:focus {
-  border-color: #ff6600;
+  border-color: #2c3e50;
   background: #ffffff;
-  box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(44, 62, 80, 0.1);
 }
 
 .search-btn {
-  background: #ff6600;
+  background: #2c3e50;
   color: #ffffff;
   border: none;
   padding: 8px 16px;
@@ -257,7 +257,7 @@ export default {
 }
 
 .search-btn:hover {
-  background: #e55a00;
+  background: #1a252f;
   transform: translateY(-1px);
 }
 
@@ -297,7 +297,7 @@ export default {
 
 .loading i {
   font-size: 2rem;
-  color: #ff6600;
+  color: #2c3e50;
   margin-bottom: 10px;
 }
 
@@ -315,7 +315,7 @@ export default {
 }
 
 .retry-btn {
-  background-color: #ff6600;
+  background-color: #2c3e50;
   color: white;
   border: none;
   padding: 10px 16px;
@@ -328,7 +328,7 @@ export default {
 }
 
 .retry-btn:hover {
-  background-color: #e55a00;
+  background-color: #1a252f;
 }
 
 .back-to-top-wrapper {

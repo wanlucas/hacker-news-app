@@ -124,7 +124,7 @@ export default {
 }
 
 .story-title a:hover {
-  color: #ff6600;
+  color: #2c3e50;
 }
 
 .story-meta {
@@ -147,7 +147,7 @@ export default {
 }
 
 .points i {
-  color: #ff6600;
+  color: #2c3e50;
 }
 
 .author i {
@@ -165,7 +165,7 @@ export default {
 
 .comments:hover,
 .comments.active {
-  color: #ff6600;
+  color: #2c3e50;
 }
 
 .comments i {
