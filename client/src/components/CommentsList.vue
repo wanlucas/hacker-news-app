@@ -1,7 +1,6 @@
 <template>
-  <div class="comments-wrapper">
-    <h4 class="comments-title" v-if="comments.length">💬 Comentários ({{ totalComments }})</h4>
-    <p v-else class="no-comments">Nenhum comentário válido encontrado.</p>
+  <div>
+    <p v-if="!comments.length" class="no-comments">Nenhum comentário válido encontrado.</p>
 
     <div class="comments-tree" v-if="comments.length">
       <CommentNode
@@ -40,10 +39,6 @@ export default {
 </script>
 
 <style scoped>
-
-.comments-wrapper {
-  margin-top: 10px;
-}
 
 .comments-title {
   margin: 0 0 10px;
