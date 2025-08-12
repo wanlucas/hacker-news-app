@@ -1,0 +1,38 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=development
+      - BINDING=0.0.0.0
+    volumes:
+      - ./server:/rails
+      - /rails/tmp
+      - /rails/log
+    command: bundle exec rails server -b 0.0.0.0
+    stdin_open: true
+    tty: true
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    stdin_open: true
+    tty: true
+    depends_on:
+      - server
+
+networks:
+  default:
+    driver: bridge

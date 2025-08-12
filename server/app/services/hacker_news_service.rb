@@ -1,5 +1,5 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 15
+  MAX_TOP_STORIES = 1
   MAX_STORIES = 50
   MIN_COMMENT_WORDS = 20
 
@@ -42,7 +42,7 @@ class HackerNewsService < CachedApi
     
     @broadcasting_service.broadcast_new_stories(new_stories)
 
-    # update_stories_cache
+    update_stories_cache
 
     return { updated?: true }
   end
@@ -54,6 +54,7 @@ class HackerNewsService < CachedApi
 
     response = @http_client.get('/topstories.json')
     ids = response.is_a?(Array) ? response : []
+    
     stories = fetch_stories_by_ids(ids.take(limit))
       .sort_by { |story| -(story['time'] || 0) }
 
@@ -74,7 +75,6 @@ class HackerNewsService < CachedApi
     response = @http_client.get('/newstories.json')
 
     ids = response.is_a?(Array) ? response : []
-    @logger.debug "📊 API returned #{ids.size} story IDs"
 
     stories = fetch_stories_by_ids(ids.take(limit))
     @logger.debug "📋 Found #{stories.size} new stories"
@@ -96,6 +96,8 @@ class HackerNewsService < CachedApi
   end
 
   def fetch_stories_by_ids(ids)
+    return [] if ids.nil? || !ids.is_a?(Array) || ids.empty?
+    
     @logger.debug "⚡ Starting parallel fetch for #{ids.size} stories..."
 
     stories = []
