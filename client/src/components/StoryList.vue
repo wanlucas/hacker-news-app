@@ -122,7 +122,7 @@ export default {
       try {
         this.loading = true
         this.error = null
-        const data = await storiesService.searchStories(q, 20)
+        const data = await apiService.searchStories(q, 20)
         
         if (data.success) {
           this.stories = data.data

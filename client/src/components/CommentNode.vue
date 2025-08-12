@@ -22,9 +22,20 @@
         <CommentNode
           v-for="child in comment.comments"
           :key="child.id"
-            :comment="child"
-            :depth="depth + 1"
+          :comment="child"
+          :depth="depth + 1"
+          v-show="!isMobileDepthLimited || depth < maxMobileDepth"
         />
+        <div 
+          v-if="isMobileDepthLimited && depth >= maxMobileDepth && hasChildren"
+          class="mobile-depth-limit"
+        >
+          <span class="depth-limit-text">
+            <i class="fas fa-mobile-alt"></i>
+            Mais {{ comment.comments.length }} resposta{{ comment.comments.length > 1 ? 's' : '' }} 
+            (oculta{{ comment.comments.length > 1 ? 's' : '' }} em mobile)
+          </span>
+        </div>
       </div>
     </transition>
   </div>
@@ -32,19 +43,41 @@
 
 <script>
 import DOMPurify from 'dompurify'
+
 export default {
   name: 'CommentNode',
   props: {
     comment: { type: Object, required: true },
     depth: { type: Number, default: 0 }
   },
-  data() { return { collapsed: false } },
+  data() { 
+    return { 
+      collapsed: false,
+      maxMobileDepth: 2,
+      isMobileDepthLimited: window.innerWidth <= 480
+    } 
+  },
   computed: {
-    hasChildren() { return this.comment.comments && this.comment.comments.length > 0 },
-    sanitizedText() { return DOMPurify.sanitize(this.comment.text || '') }
+    hasChildren() { 
+      return this.comment.comments && this.comment.comments.length > 0 
+    },
+    sanitizedText() { 
+      return DOMPurify.sanitize(this.comment.text || '') 
+    }
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize)
   },
   methods: {
-    toggle() { this.collapsed = !this.collapsed },
+    toggle() { 
+      this.collapsed = !this.collapsed 
+    },
+    handleResize() {
+      this.isMobileDepthLimited = window.innerWidth <= 768
+    },
     formatTime(ts) {
       if (!ts) return ''
       const date = new Date(ts * 1000)
@@ -120,6 +153,27 @@ export default {
   gap: 8px;
 }
 
+.mobile-depth-limit {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.depth-limit-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.depth-limit-text i {
+  color: #2c3e50;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity .15s ease;
@@ -156,6 +210,15 @@ export default {
   
   .comment-node + .comment-node {
     margin-top: 6px;
+  }
+
+  .mobile-depth-limit {
+    padding: 6px 10px;
+    margin-top: 6px;
+  }
+
+  .depth-limit-text {
+    font-size: 0.75rem;
   }
 }
 </style>
