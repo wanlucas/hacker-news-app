@@ -7,12 +7,7 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    client_url = ENV.fetch('CLIENT_URL', 'http://localhost:5173')
-    origins = [
-      client_url,
-    ].uniq
-
-    origins origins
+    origins ENV.fetch('CLIENT_URL')
 
     resource "*",
       headers: :any,
@@ -21,9 +16,4 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
   end
 end
 
-client_url = ENV.fetch('CLIENT_URL', 'http://localhost:5173')
-allowed_origins = [
-  client_url,
-].uniq
-
-Rails.application.config.action_cable.allowed_request_origins = allowed_origins
+Rails.application.config.action_cable.allowed_request_origins = ENV.fetch('CLIENT_URL')

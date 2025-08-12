@@ -8,7 +8,7 @@ services:
     environment:
       - RAILS_ENV=development
       - BINDING=0.0.0.0
-      - CLIENT_URL=${CLIENT_URL}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:5173}
     volumes:
       - ./server:/rails
       - /rails/tmp
@@ -24,8 +24,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=${VITE_API_URL}
-      - VITE_SOCKET_URL=${VITE_SOCKET_URL}
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3000}
+      - VITE_SOCKET_URL=${VITE_SOCKET_URL:-ws://localhost:3000/cable}
     volumes:
       - ./client:/app
       - /app/node_modules
