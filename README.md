@@ -34,24 +34,30 @@ docker-compose up --build
 **Backend (Rails):**
 ```bash
 cd server
+
 bundle install
 rails server -p 3000
 ```
 
 **Frontend (Vue.js):**
 ```bash
-cd client
+
 npm install
 npm run dev
 ```
 
 ### 🌍 Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz com:
-```env
+#### Frontend (Client)
+
+VITE_SOCKET_URL=ws://localhost:3000/cable
 VITE_API_URL=http://localhost:3000
 VITE_DEBUG=true
-```
+
+
+#### Backend (Server)
+
+CLIENT_URL=http://localhost:5173
 
 ## 🏗️ Arquitetura da Aplicação
 
@@ -307,6 +313,7 @@ rails test:coverage
 - **Puma** - Application server
 - **Net::HTTP** - HTTP client nativo
 - **Rails Cache** - Sistema de cache
+- **dotenv-rails** - Gerenciamento de variáveis de ambiente
 
 ### Frontend  
 - **Vue.js 3** - Framework reativo
