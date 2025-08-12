@@ -3,6 +3,14 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  if Rails.application.credentials.secret_key_base.nil?
+    config.secret_key_base = ENV['SECRET_KEY_BASE'] || 
+      ENV['RAILS_MASTER_KEY']&.then { |key| 
+        require 'digest'
+        Digest::SHA256.hexdigest(key + 'secret_key_base_fallback')
+    }
+  end
+
   # Code is not reloaded between requests.
   config.enable_reloading = false
 
@@ -22,7 +30,8 @@ Rails.application.configure do
   config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  # Disabled for Railway deployment as Railway handles SSL termination
+  config.force_ssl = ENV['RAILWAY_ENVIRONMENT_NAME'].present? ? false : true
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
