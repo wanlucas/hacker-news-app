@@ -1,6 +1,6 @@
 class HackerNewsService < CachedApi
   MAX_TOP_STORIES = 15
-  MAX_STORIES = 50
+  MAX_STORIES = 100
   MIN_COMMENT_WORDS = 20
 
   def initialize(
