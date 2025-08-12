@@ -1,5 +1,5 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 1
+  MAX_TOP_STORIES = 15
   MAX_STORIES = 50
   MIN_COMMENT_WORDS = 20
 

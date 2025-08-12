@@ -6,7 +6,7 @@ class ServiceFactory
     def hacker_news_service
       HackerNewsService.new(
         http_client: HttpClient.new('https://hacker-news.firebaseio.com/v0'),
-        cache_repository: Repositories::Cache::Rails.new,
+        cache_repository: Cache::Rails.new,
         broadcasting_service: BroadcastingService.new,
         logger: Rails.logger,
       )
