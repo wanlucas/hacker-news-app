@@ -1,5 +1,5 @@
 class HackerNewsService < CachedApi
-  MAX_TOP_STORIES = 1
+  MAX_TOP_STORIES = 15
   MAX_STORIES = 50
   MIN_COMMENT_WORDS = 20
 
@@ -90,7 +90,7 @@ class HackerNewsService < CachedApi
   def fetch_max_item_id
     @http_client.get('/maxitem.json')
 
-  rescue HttpClient::ApiError => error
+  rescue => error
     @logger.error "❌ Failed to fetch max item ID: #{error.message}, returning nil"
     nil
   end
