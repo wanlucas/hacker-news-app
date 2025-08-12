@@ -1,7 +1,6 @@
-import { apiURL } from '@/lib/api'
 import { ref, onMounted, onUnmounted } from 'vue'
 
-export function useStoriesWebSocket(serverUrl = `${apiURL("ws")}/cable`) {
+export function useStoriesWebSocket(serverUrl = import.meta.env.VITE_SOCKET_URL || 'ws://localhost:3000/cable') {
   const isConnected = ref(false)
   const newStories = ref(null)
 

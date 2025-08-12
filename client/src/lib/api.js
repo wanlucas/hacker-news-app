@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-export const apiURL = (protocol = 'http') => {
-  return import.meta.env.VITE_API_URL || `${protocol}://localhost:3000`
+export const apiURL = () => {
+  return import.meta.env.VITE_API_URL || "http://localhost:3000"
 }
 
 const apiClient = axios.create({
