@@ -1,4 +1,6 @@
 class Api::StoriesController < ApplicationController
+  include InputSanitizer
+
   def index    
     stories = ServiceFactory.hacker_news_service.get_top_stories
 
@@ -10,17 +12,8 @@ class Api::StoriesController < ApplicationController
   end
 
   def search
-    query = params[:q]
+    query = sanitize_input(params[:q])
     limit = [params[:limit]&.to_i || 10, 50].min
-
-    if query.blank?
-      render json: { 
-        success: false, 
-        message: 'Query parameter is required'
-      }, status: :bad_request
-      return
-    end
-
     stories = ServiceFactory.hacker_news_service.search_stories(query, limit)
 
     render json: {
