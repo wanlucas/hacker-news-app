@@ -1,4 +1,4 @@
-# 🐝 Bee - Hacker News Real-time Client
+# Hacker News Real-time Client
 
 Uma aplicação full-stack moderna que consome a API do Hacker News com cache inteligente, atualizações em tempo real via WebSocket e interface Vue.js responsiva.
 
@@ -7,8 +7,6 @@ Uma aplicação full-stack moderna que consome a API do Hacker News com cache in
 ### Pré-requisitos
 
 - Docker e Docker Compose
-- Node.js 20+ (opcional, se rodar localmente)
-- Ruby 3.2+ (opcional, se rodar localmente)
 
 ### 🔧 Instalação e Execução
 
@@ -133,7 +131,7 @@ end
 
 #### 💾 Sistema de Cache Inteligente
 
-A aplicação implementa uma estratégia sofisticada de cache com **Stale-While-Revalidate**:
+A aplicação implementa uma estratégia de cache com **Stale-While-Revalidate**:
 
 ```ruby
 # app/lib/cached_api.rb
@@ -190,7 +188,6 @@ end
 - ⏰ Atualizações automáticas a cada 5 minutos
 - 🔄 Mantém cache sempre atualizado
 - 📊 Broadcast de novos dados via WebSocket
-- 🛡️ Error handling robusto
 
 #### 🌐 HTTP Client Robusto
 
@@ -256,21 +253,12 @@ class StoriesChannel < ActionCable::Channel::Base
 end
 ```
 
-#### 🛡️ Graceful Error Handling
-
-A aplicação implementa múltiplas camadas de error handling:
-
-1. **HTTP Client Level**: Retry automático e fallbacks
-2. **Service Level**: Logging detalhado e recovery
-3. **Cache Level**: Serve dados stale em caso de falha
-4. **Background Jobs**: Error reporting e continuidade
-5. **Thread Level**: Timeout controls e cleanup
-
 ## 🧪 Testes Automatizados
 
 ### 📋 Estrutura de Testes
 
 ```ruby
+
 # test/services/hacker_news_service_test.rb
 class HackerNewsServiceTest < ActiveSupport::TestCase
   def setup
@@ -311,36 +299,6 @@ rails test test/services/hacker_news_service_test.rb
 rails test:coverage
 ```
 
-## 🎨 Frontend (Vue.js)
-
-### 🏗️ Composables Architecture
-
-```javascript
-// src/composables/useStoriesWebSocket.js
-export function useStoriesWebSocket() {
-  const isConnected = ref(false)
-  const newStories = ref(null)
-  
-  // WebSocket management
-  // Reactive state
-  // Lifecycle hooks
-}
-```
-
-### 📡 API Integration
-
-```javascript
-// src/lib/api.js
-const apiClient = axios.create({
-  baseURL: apiURL(),
-  timeout: 10000,
-  interceptors: {
-    request: [/* logging */],
-    response: [/* error handling */]
-  }
-})
-```
-
 ## 🔧 Tecnologias Utilizadas
 
 ### Backend
@@ -357,58 +315,6 @@ const apiClient = axios.create({
 - **Action Cable JS** - WebSocket client
 - **DOMPurify** - Sanitização XSS
 
-### DevOps
-- **Docker & Docker Compose** - Containerização
-- **Kamal** - Deployment
-- **Rubocop** - Linting Ruby
-- **Brakeman** - Security scanner
-
-## 📊 Performance e Métricas
-
-### 🎯 Benchmarks
-- **Cache Hit Rate**: ~95% em produção
-- **API Response Time**: < 50ms (cached)
-- **Fresh Data Fetch**: ~2-3s (parallelizado)
-- **WebSocket Latency**: < 100ms
-- **Memory Usage**: ~50MB (Rails process)
-
-### 📈 Monitoring
-- Logging estruturado com níveis
-- Request/response timing
-- Cache hit/miss metrics
-- WebSocket connection monitoring
-- Background job performance
-
-## 🚀 Deploy e Produção
-
-### 🐳 Docker Production
-
-```bash
-# Build para produção
-docker-compose -f docker-compose.production.yml up -d
-
-# Scaling
-docker-compose up --scale server=3
-```
-
-### ☁️ Deploy com Kamal
-
-```bash
-# Setup inicial
-kamal setup
-
-# Deploy
-kamal deploy
-```
-
-## 🔐 Segurança
-
-- **CORS** configurado adequadamente
-- **Content Security Policy** implementado
-- **XSS Protection** com DOMPurify
-- **Rate Limiting** nos endpoints
-- **Environment Variables** para configurações sensíveis
-- **Security Scanner** com Brakeman
 
 ## 📝 API Endpoints
 
@@ -419,18 +325,5 @@ POST /api/stories/update  # Force cache update
 WS /cable                 # WebSocket connection
 ```
 
-## 🤝 Contribuição
 
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Execute os testes
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob licença MIT. Veja o arquivo LICENSE para detalhes.
-
----
-
-**Desenvolvido com ❤️ usando Ruby on Rails e Vue.js**
+**Desenvolvido com 🎵 usando Ruby on Rails e Vue.js**
