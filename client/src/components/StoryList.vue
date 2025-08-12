@@ -2,9 +2,11 @@
   <div class="story-list">
     <div class="header-section">
       <h2>
-        📰 {{ isSearching ? 'Resultados da busca' : 'Top Stories' }} ({{ stories.length }})
-        <span 
-          class="websocket-indicator" 
+        📰 {{ isSearching ? "Resultados da busca" : "Top Stories" }} ({{
+          stories.length
+        }})
+        <span
+          class="websocket-indicator"
           :class="{ connected: isConnected }"
           :title="getWebSocketTooltip()"
         ></span>
@@ -62,15 +64,15 @@
 </template>
 
 <script>
-import StoryItem from './StoryItem.vue'
-import { useStoriesWebSocket } from '../composables/useStoriesWebSocket.js'
-import storiesService from '../services/stories.js'
+import StoryItem from "./StoryItem.vue";
+import { useStoriesWebSocket } from "../composables/useStoriesWebSocket.js";
+import storiesService from "../services/stories.js";
 
 export default {
-  name: 'StoryList',
+  name: "StoryList",
   components: { StoryItem },
   setup() {
-    return useStoriesWebSocket()
+    return useStoriesWebSocket();
   },
   data() {
     return {
@@ -78,83 +80,83 @@ export default {
       topStories: [],
       loading: true,
       error: null,
-      searchQuery: '',
+      searchQuery: "",
       isSearching: false,
-    }
+    };
   },
   watch: {
     newStories(stories) {
       if (stories && !this.isSearching) {
-        this.stories = stories
-        this.topStories = stories
+        this.stories = stories;
+        this.topStories = stories;
       }
-    }
+    },
   },
   methods: {
     async fetchStories() {
       try {
-        this.loading = true
-        this.error = null
-        const data = await storiesService.getStories()
-        
+        this.loading = true;
+        this.error = null;
+        const data = await storiesService.getStories();
+
         if (data.success) {
-          this.stories = data.data
-          this.topStories = data.data
-          this.isSearching = false
+          this.stories = data.data;
+          this.topStories = data.data;
+          this.isSearching = false;
         } else {
-          throw new Error('Falha ao carregar stories')
+          throw new Error("Falha ao carregar stories");
         }
       } catch (error) {
-        console.error('Erro ao buscar stories:', error)
-        this.error = error.message || 'Não foi possível carregar as stories.'
-      } finally { 
-        this.loading = false 
+        console.error("Erro ao buscar stories:", error);
+        this.error = error.message || "Não foi possível carregar as stories.";
+      } finally {
+        this.loading = false;
       }
     },
 
     async handleSearch() {
-      const q = this.searchQuery.trim()
-      if (!q) { 
-        this.clearSearch() 
-        return 
+      const q = this.searchQuery.trim();
+      if (!q) {
+        this.clearSearch();
+        return;
       }
-      
+
       try {
-        this.loading = true
-        this.error = null
-        const data = await apiService.searchStories(q, 20)
-        
+        this.loading = true;
+        this.error = null;
+        const data = await storiesService.searchStories(q, 20);
+
         if (data.success) {
-          this.stories = data.data
-          this.isSearching = true
-        } else { 
-          throw new Error('Busca falhou') 
+          this.stories = data.data;
+          this.isSearching = true;
+        } else {
+          throw new Error("Busca falhou");
         }
       } catch (error) {
-        console.error('Erro na busca:', error)
-        this.error = error.message || 'Erro ao buscar.'
-      } finally { 
-        this.loading = false 
+        console.error("Erro na busca:", error);
+        this.error = error.message || "Erro ao buscar.";
+      } finally {
+        this.loading = false;
       }
     },
 
     clearSearch() {
-      this.searchQuery = ''
-      this.isSearching = false
-      this.stories = this.topStories
+      this.searchQuery = "";
+      this.isSearching = false;
+      this.stories = this.topStories;
     },
 
     getWebSocketTooltip() {
-      return this.isConnected 
-        ? '🟢 WebSocket: Conectado'
-        : '🔴 WebSocket: Desconectado'
-    }
+      return this.isConnected
+        ? "🟢 WebSocket: Conectado"
+        : "🔴 WebSocket: Desconectado";
+    },
   },
-  
+
   mounted() {
-    this.fetchStories()
-  }
-}
+    this.fetchStories();
+  },
+};
 </script>
 
 <style scoped>

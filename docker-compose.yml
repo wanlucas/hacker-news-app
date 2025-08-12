@@ -8,6 +8,7 @@ services:
     environment:
       - RAILS_ENV=development
       - BINDING=0.0.0.0
+      - CLIENT_URL=${CLIENT_URL}
     volumes:
       - ./server:/rails
       - /rails/tmp
