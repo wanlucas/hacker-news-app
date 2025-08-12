@@ -50,14 +50,14 @@ npm run dev
 
 #### Frontend (Client)
 
-VITE_SOCKET_URL=ws://localhost:3000/cable
-VITE_API_URL=http://localhost:3000
-VITE_DEBUG=true
+- VITE_SOCKET_URL=ws://localhost:3000/cable
+- VITE_API_URL=http://localhost:3000
+- VITE_DEBUG=true
 
 
 #### Backend (Server)
 
-CLIENT_URL=http://localhost:5173
+- CLIENT_URL=http://localhost:5173
 
 ## 🏗️ Arquitetura da Aplicação
 
