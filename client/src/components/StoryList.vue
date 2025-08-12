@@ -168,7 +168,7 @@ export default {
 
 .header-section h2 {
   color: #333;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   display: flex;
   align-items: center;
   margin: 0;
